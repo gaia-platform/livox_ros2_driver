@@ -35,6 +35,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include "livox_interfaces/msg/custom_point.hpp"
 #include "livox_interfaces/msg/custom_msg.hpp"
+#include <map>
 
 namespace livox_ros {
 
@@ -53,6 +54,18 @@ typedef enum {
   kPclPxyziMsg = 2,
   kLivoxImuMsg = 3,
 } MessageTypeOfTransfer;
+
+class TopicAndFrame
+{
+  public:
+
+    std::string _topic;
+    std::string _frame;
+
+    TopicAndFrame( std::string topic, std::string frame) : 
+      _topic(topic), _frame(frame) 
+    {}
+};
 
 class Lddc {
  public:
@@ -104,6 +117,11 @@ class Lddc {
   double publish_frq_;
   uint32_t publish_period_ns_;
   std::string frame_id_;
+
+  std::map<std::string, TopicAndFrame> _lut;
+  void init_lut();
+  std::string lookup_topic(std::string key);
+  std::string lookup_frame(std::string key);
 
   std::shared_ptr<rclcpp::PublisherBase>private_pub_[kMaxSourceLidar];
   std::shared_ptr<rclcpp::PublisherBase>global_pub_;

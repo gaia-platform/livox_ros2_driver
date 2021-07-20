@@ -581,12 +581,12 @@ std::shared_ptr<rclcpp::PublisherBase> Lddc::CreatePublisher(uint8_t msg_type,
     std::string &topic_name, uint32_t queue_size) {
     if (kPointCloud2Msg == msg_type) {
       RCLCPP_INFO(cur_node_->get_logger(),
-          "%s publish use PointCloud2 format", topic_name.c_str());
+          "%s publish use PointCloud2 format. YAY!", topic_name.c_str());
       return cur_node_->create_publisher<
           sensor_msgs::msg::PointCloud2>(topic_name, queue_size);
     } else if (kLivoxCustomMsg == msg_type) {
       RCLCPP_INFO(cur_node_->get_logger(),
-          "%s publish use livox custom format", topic_name);
+          "%s publish use livox custom format", topic_name.c_str());
       return cur_node_->create_publisher<
           livox_interfaces::msg::CustomMsg>(topic_name, queue_size);
     }
@@ -618,6 +618,12 @@ std::shared_ptr<rclcpp::PublisherBase> Lddc::GetCurrentPublisher(uint8_t handle)
           lds_->lidars_[handle].info.broadcast_code);
       std::string topic_name(name_str);
       queue_size = queue_size * 2; // queue size is 64 for only one lidar
+
+      auto new_topic_name = lookup_topic(std::string(lds_->lidars_[handle].info.broadcast_code));
+
+      RCLCPP_INFO(cur_node_->get_logger(),
+        "---------- NEW TOPIC NAME : %s -----------", new_topic_name.c_str());
+
       private_pub_[handle] = CreatePublisher(transfer_format_, topic_name,
           queue_size);
     }
@@ -675,6 +681,31 @@ void Lddc::PrepareExit(void) {
     lds_->PrepareExit();
     lds_ = nullptr;
   }
+}
+
+void Lddc::init_lut()
+{
+  _lut.emplace("aa", TopicAndFrame("theTopic", "theFrame"));
+}
+
+std::string Lddc::lookup_topic(std::string key)
+{
+  auto ss = _lut.find(key);
+
+  if(ss == _lut.end())
+    return "";
+
+  return ss->second._topic;
+}
+
+std::string Lddc::lookup_frame(std::string key)
+{
+  auto ss = _lut.find(key);
+
+  if(ss == _lut.end())
+    return "";
+
+  return ss->second._frame;
 }
 
 }  // namespace livox_ros
